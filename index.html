@@ -359,6 +359,132 @@
             /* Đứng thẳng lên kiêu hãnh */
             box-shadow: 0 10px 20px rgba(26, 43, 60, 0.2);
         }
+
+        /* =========================================
+           MA TRẬN TRÌNH DIỄN KHÔNG CHẠM (IFRAME MODAL)
+           ========================================= */
+        .demo-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: rgba(26, 43, 60, 0.85);
+            /* Nền Xanh Hải Quân trong suốt che phủ toàn bộ */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s var(--ease-luxury), visibility 0.6s var(--ease-luxury);
+        }
+
+        /* Khi được kích hoạt, lồng kính sẽ hiện ra */
+        .demo-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Giả lập màn hình điện thoại (Mobile Mockup) */
+        .demo-iframe-wrapper {
+            width: 95vw;
+            height: 90vh;
+            max-width: 430px;
+            /* Khóa cứng tỷ lệ điện thoại cực đẹp */
+            background: var(--bg-ice-blue);
+            border-radius: 30px;
+            /* Góc bo tròn như viền iPhone */
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2);
+            position: relative;
+            transform: translateY(60px) scale(0.95);
+            transition: transform 0.6s var(--ease-luxury) 0.1s;
+        }
+
+        .demo-modal-overlay.active .demo-iframe-wrapper {
+            transform: translateY(0) scale(1);
+            /* Lao lên mượt mà */
+        }
+
+        #demo-iframe {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+        }
+
+        /* Chữ nhấp nháy trong lúc đợi mạng load thiệp */
+        .demo-loader {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: var(--font-serif);
+            font-size: 1.2rem;
+            color: var(--text-navy);
+            font-style: italic;
+            letter-spacing: 2px;
+            animation: pulseLoader 1.5s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulseLoader {
+            0% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Nút Tắt (X) khổng lồ, thanh lịch */
+        .demo-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 3.5rem;
+            font-weight: 300;
+            line-height: 1;
+            cursor: pointer;
+            transition: transform 0.4s ease;
+            z-index: 9999999;
+        }
+
+        .demo-close-btn:hover {
+            transform: rotate(90deg) scale(1.1);
+            /* Xoay nhẹ khi chạm vào */
+        }
+
+        @media (max-width: 600px) {
+            .demo-iframe-wrapper {
+                width: 100vw;
+                height: 100dvh;
+                max-width: none;
+                border-radius: 0;
+                /* Xóa viền giả lập trên điện thoại thật */
+            }
+
+            .demo-close-btn {
+                top: 10px;
+                right: 15px;
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                font-size: 2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding-bottom: 5px;
+            }
+        }
     </style>
 </head>
 
@@ -434,6 +560,21 @@
             <!-- JavaScript sẽ tự động sinh ra các nút 01, 02, 03 ở đây -->
         </div>
 
+        <!-- =========================================
+         LỒNG KÍNH VIỄN VỌNG (LIVE DEMO MODAL)
+         ========================================= -->
+        <div id="live-demo-modal" class="demo-modal-overlay">
+            <!-- Nút Tắt -->
+            <button class="demo-close-btn" aria-label="Đóng lại">&times;</button>
+
+            <!-- Khung viền điện thoại -->
+            <div class="demo-iframe-wrapper">
+                <div class="demo-loader">Đang kết nối không gian...</div>
+                <!-- Bức màn Iframe thần thánh -->
+                <iframe id="demo-iframe" src="" frameborder="0" allowfullscreen allow="autoplay"></iframe>
+            </div>
+        </div>
+
     </main>
 
     <script>
@@ -502,6 +643,51 @@
 
             // KÍCH HOẠT HỆ THỐNG PHÂN MẢNH
             renderPage(1);
+        });
+
+        // =========================================
+        // HỆ THỐNG ĐÁNH CHẶN - MỞ THIỆP TRONG LỒNG KÍNH
+        // =========================================
+        const modal = document.getElementById('live-demo-modal');
+        const iframe = document.getElementById('demo-iframe');
+        const closeBtn = document.querySelector('.demo-close-btn');
+
+        // Quét toàn bộ nút "XEM MẪU"
+        // (Phải dùng Event Delegation để bắt được cả những nút ở trang 2, trang 3 chưa được sinh ra)
+        document.body.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-view-demo');
+            if (!btn) return;
+
+            e.preventDefault(); // CHẶN LỆNH CHUYỂN TRANG MẶC ĐỊNH
+
+            const targetUrl = btn.getAttribute('href');
+            if (targetUrl && targetUrl !== '#') {
+                // Nhét link vào Iframe và hiển thị lồng kính
+                iframe.src = targetUrl;
+                modal.classList.add('active');
+
+                // Khóa không cho trang chủ cuộn lằng nhằng bên dưới
+                document.body.style.overflow = 'hidden';
+            }
+        });
+
+        // Hàm hủy lồng kính
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = ''; // Mở khóa cuộn trang chủ
+
+            // Đợi 0.6s cho lồng kính mờ hẳn rồi mới xóa nguồn Iframe (Cắt đứng tiếng nhạc đang phát bên trong)
+            setTimeout(() => {
+                iframe.src = '';
+            }, 600);
+        }
+
+        // Đóng khi bấm nút X
+        closeBtn.addEventListener('click', closeModal);
+
+        // Đóng khi bấm ra ngoài không gian tối
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
         });
     </script>
 
