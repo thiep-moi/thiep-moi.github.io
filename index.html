@@ -646,48 +646,64 @@
         });
 
         // =========================================
-        // HỆ THỐNG ĐÁNH CHẶN - MỞ THIỆP TRONG LỒNG KÍNH
+        // HỆ THỐNG ĐÁNH CHẶN & THAO TÚNG NÚT "BACK" (HISTORY API)
         // =========================================
         const modal = document.getElementById('live-demo-modal');
         const iframe = document.getElementById('demo-iframe');
         const closeBtn = document.querySelector('.demo-close-btn');
 
-        // Quét toàn bộ nút "XEM MẪU"
-        // (Phải dùng Event Delegation để bắt được cả những nút ở trang 2, trang 3 chưa được sinh ra)
+        // 1. MỞ LỒNG KÍNH & BƠM TRẠNG THÁI ẢO VÀO TRÌNH DUYỆT
         document.body.addEventListener('click', function (e) {
             const btn = e.target.closest('.btn-view-demo');
             if (!btn) return;
 
-            e.preventDefault(); // CHẶN LỆNH CHUYỂN TRANG MẶC ĐỊNH
-
+            e.preventDefault();
             const targetUrl = btn.getAttribute('href');
+
             if (targetUrl && targetUrl !== '#') {
-                // Nhét link vào Iframe và hiển thị lồng kính
+                // Đưa link vào lồng kính và hiển thị
                 iframe.src = targetUrl;
                 modal.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Khóa cuộn trang chủ
 
-                // Khóa không cho trang chủ cuộn lằng nhằng bên dưới
-                document.body.style.overflow = 'hidden';
+                // 🔥 LỆNH BÀI THAO TÚNG: Cấy một trạng thái "ảo" (#view-demo) vào Lịch sử trình duyệt
+                history.pushState({ modalOpen: true }, "", "#view-demo");
             }
         });
 
-        // Hàm hủy lồng kính
-        function closeModal() {
+        // 2. HÀM TIÊU HỦY LỒNG KÍNH (CHỈ XỬ LÝ GIAO DIỆN)
+        function closeModalUI() {
             modal.classList.remove('active');
             document.body.style.overflow = ''; // Mở khóa cuộn trang chủ
 
-            // Đợi 0.6s cho lồng kính mờ hẳn rồi mới xóa nguồn Iframe (Cắt đứng tiếng nhạc đang phát bên trong)
-            setTimeout(() => {
-                iframe.src = '';
-            }, 600);
+            // Đợi lồng kính mờ hẳn rồi mới xóa nguồn Iframe (Cắt tiếng nhạc êm ái)
+            setTimeout(() => { iframe.src = ''; }, 600);
         }
 
-        // Đóng khi bấm nút X
-        closeBtn.addEventListener('click', closeModal);
+        // 3. 🔥 ĐÁNH CHẶN NÚT "QUAY LẠI" (BACK BUTTON/SWIPE) CỦA ĐIỆN THOẠI
+        window.addEventListener('popstate', function (e) {
+            // Khi khách vuốt Back, thẻ "#view-demo" bị trình duyệt rút lại.
+            // Ta kiểm tra, nếu lồng kính đang mở -> Tiêu hủy nó ngay lập tức!
+            if (modal.classList.contains('active')) {
+                closeModalUI();
+            }
+        });
 
-        // Đóng khi bấm ra ngoài không gian tối
+        // 4. KHI KHÁCH CỐ TÌNH BẤM NÚT "X" HOẶC CHẠM RA NGOÀI LỒNG KÍNH
+        function handleManualClose() {
+            // Thay vì đóng UI thô bạo, ta bắt trình duyệt "Lùi lại 1 bước"
+            // Điều này sẽ tự động kích hoạt sự kiện "popstate" ở trên, giữ lịch sử cực sạch!
+            if (window.location.hash === '#view-demo') {
+                history.back();
+            } else {
+                closeModalUI(); // Cứu cánh phòng hờ
+            }
+        }
+
+        // Kết nối các nút bấm vào hàm đóng tiêu chuẩn
+        closeBtn.addEventListener('click', handleManualClose);
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
+            if (e.target === modal) handleManualClose();
         });
     </script>
 
