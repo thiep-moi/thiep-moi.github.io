@@ -310,6 +310,55 @@
                 transform: translateY(0);
             }
         }
+
+        /* =========================================
+           HỆ THỐNG PHÂN TRANG TẠP CHÍ (PAGINATION)
+           ========================================= */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 5rem;
+            opacity: 0;
+            animation: fadeUp 1.5s var(--ease-luxury) 1.2s forwards;
+        }
+
+        .page-number {
+            background: transparent;
+            border: 1px solid transparent;
+            /* Viền tàng hình */
+            color: var(--text-navy);
+            font-family: var(--font-serif);
+            /* Dùng font Serif để tạo số 01, 02 quyền lực */
+            font-size: 1.2rem;
+            font-style: italic;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            /* Khối tròn hoàn hảo */
+            cursor: pointer;
+            transition: all 0.4s var(--ease-luxury);
+        }
+
+        /* Hiệu ứng khi rê chuột */
+        .page-number:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* Nút đang được chọn (Active) */
+        .page-number.active {
+            background: var(--text-navy);
+            color: #ffffff;
+            border-color: var(--text-navy);
+            font-style: normal;
+            /* Đứng thẳng lên kiêu hãnh */
+            box-shadow: 0 10px 20px rgba(26, 43, 60, 0.2);
+        }
     </style>
 </head>
 
@@ -379,7 +428,82 @@
             </article>
 
         </div>
+
+        <!-- BỘ ĐIỀU KHIỂN PHÂN TRANG (LUXURY PAGINATION) -->
+        <div id="luxury-pagination" class="pagination-wrapper">
+            <!-- JavaScript sẽ tự động sinh ra các nút 01, 02, 03 ở đây -->
+        </div>
+
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const CARDS_PER_PAGE = 12; // LUẬT THÉP CỦA NGÀI: Chính xác 12 thẻ mỗi trang
+            const collectionGrid = document.querySelector('.collection-grid');
+            const cards = Array.from(collectionGrid.querySelectorAll('.template-card'));
+            const paginationContainer = document.getElementById('luxury-pagination');
+
+            let currentPage = 1;
+            const totalPages = Math.ceil(cards.length / CARDS_PER_PAGE);
+
+            // Hàm Đạo diễn Không gian: Hiển thị thẻ theo trang
+            function renderPage(page) {
+                currentPage = page;
+
+                cards.forEach((card, index) => {
+                    // Thuật toán cắt lát: Chỉ hiển thị thẻ thuộc về trang hiện tại
+                    if (index >= (page - 1) * CARDS_PER_PAGE && index < page * CARDS_PER_PAGE) {
+                        card.style.display = 'flex';
+
+                        // Kích nổ lại hiệu ứng trượt lên (Reset Animation) để khách luôn thấy mượt mà
+                        card.style.animation = 'none';
+                        card.offsetHeight; /* Cú lừa vật lý ép trình duyệt load lại */
+                        card.style.animation = null;
+                    } else {
+                        // Chém bỏ tàn nhẫn những thẻ không thuộc trang này
+                        card.style.display = 'none';
+                    }
+                });
+
+                renderPagination();
+            }
+
+            // Hàm kiến tạo các con số Tạp chí (01, 02, 03)
+            function renderPagination() {
+                paginationContainer.innerHTML = ''; // Xóa sạch để xây lại
+
+                // NẾU CHƯA ĐỦ 13 THIỆP: GIẤU LUÔN PHÂN TRANG CHO SẠCH SẼ!
+                if (totalPages <= 1) {
+                    paginationContainer.style.display = 'none';
+                    return;
+                }
+
+                paginationContainer.style.display = 'flex';
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const btn = document.createElement('button');
+
+                    // Ép định dạng 01, 02 thay vì 1, 2 phèn chúa
+                    const formattedNumber = i < 10 ? `0${i}` : i;
+
+                    btn.className = `page-number ${i === currentPage ? 'active' : ''}`;
+                    btn.innerText = formattedNumber;
+
+                    btn.addEventListener('click', () => {
+                        renderPage(i);
+                        // Cuộn mượt mà lên đầu Lưới thiệp sau khi chuyển trang
+                        const offsetTop = collectionGrid.getBoundingClientRect().top + window.scrollY - 100;
+                        window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+                    });
+
+                    paginationContainer.appendChild(btn);
+                }
+            }
+
+            // KÍCH HOẠT HỆ THỐNG PHÂN MẢNH
+            renderPage(1);
+        });
+    </script>
 
 </body>
 
